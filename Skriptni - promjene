@@ -1,0 +1,11 @@
+deep_sort.py - line 50 -  outputs.append(np.array([x1, y1, x2, y2, track_id, track_oid], dtype=int))
+
+detection.py - kopiraj sve
+detection.py - pazi na path kod importa
+
+globals.py - dodaj u isti folder kao detection.py
+
+predict.py - pazi na path kod importa
+predict.py - imports
+predict.py - sve izmedu ################## i ################## oznaka
+predict.py - dodana analyze_and_plot funkcija - treba dodati obradu podataka
