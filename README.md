@@ -2,7 +2,7 @@
 Analysis of traffic participants in videos of different parts of a city using YOLOv8 pre-trained model for class Programiranje: skriptni jezici.
 Base project is https://github.com/MuhammadMoinFaisal/YOLOv8-DeepSORT-Object-Tracking.
 
-##Steps to run the code
+## Steps to run the code
 - Clone the repository
 ```
 git clone https://github.com/ivanatus/traffic_analysis_PSJ
