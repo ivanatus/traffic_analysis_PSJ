@@ -14,6 +14,7 @@ class Globals:
     no_of_buses = 0
     no_of_trucks = 0
     no_of_trains = 0
+    vehicle_ids = []
     
     @staticmethod
     def set_global_frame(frame):

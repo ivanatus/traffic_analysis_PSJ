@@ -25,7 +25,7 @@ import numpy as np
 #import deep_sort_pytorch
 import sys
 import os
-linux_path = os.path.expanduser("~/YOLOv8-DeepSORT-Object-Tracking/ultralytics/yolo/v8/detect/deep_sort_pytorch/deep_sort/sort")
+linux_path = os.path.expanduser("~/traffic_analysis_PSJ/ultralytics/yolo/v8/detect/deep_sort_pytorch/deep_sort/sort")
 sys.path.append(linux_path)
 import csv
 
@@ -33,6 +33,8 @@ import csv
 #sys.path.append("~/YOLOv8-DeepSORT-Object-Tracking/ultralytics/yolo/v8/detect/deep_sort_pytorch/deep_sort/sort")
 
 from globals import Globals
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)
@@ -47,10 +49,15 @@ global_instance = Globals()
 def init_tracker():
 
     #######################################
-    with open('results_TEST.csv', 'a', newline='') as csvfile:
-            fieldnames = ['frame', 'people', 'bikes', 'buses', 'cars', 'trucks', 'trains']
+    with open('per_frame.csv', 'a', newline='') as csvfile:
+            fieldnames = ['frame', 'people', 'bikes', 'buses', 'cars', 'trucks']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writerow({'frame': "Frame", 'people': "People", 'bikes': "Bikes", 'buses': "Buses", 'cars': "Cars", 'trucks': "Trucks", 'trains': "Trains"})
+            writer.writerow({'frame': "Frame", 'people': "People", 'bikes': "Bikes", 'buses': "Buses", 'cars': "Cars", 'trucks': "Trucks",})
+
+    with open('overall.csv', 'a', newline='') as csvfile:
+            fieldnames = ['frame', 'id', 'type']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writerow({'frame': "Frame", 'id': "ID", 'type': "Type"})
 
     #######################################
 
@@ -187,6 +194,10 @@ def draw_boxes(img, bbox, names,object_id, identities=None, offset=(0, 0)):
         color = compute_color_for_labels(object_id[i])
         obj_name = names[object_id[i]]
         label = '{}{:d}'.format("", id) + ":"+ '%s' % (obj_name)
+
+        if id not in global_instance.vehicle_ids:
+            global_instance.vehicle_ids.append(id)
+            write_ids(id, obj_name)
         
         if(obj_name not in ['person', 'bike', 'bus', 'car', 'train', 'truck']):
             return None
@@ -205,6 +216,12 @@ def draw_boxes(img, bbox, names,object_id, identities=None, offset=(0, 0)):
             cv2.line(img, data_deque[id][i - 1], data_deque[id][i], color, thickness)
     return img
 ##########################################################################################
+
+def write_ids(id, type):
+    with open('overall.csv', 'a', newline='') as csvfile:
+            fieldnames = ['frame', 'id', 'type']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writerow({'frame': global_instance.global_frame, 'id': id, 'type': type})
 
 class DetectionPredictor(BasePredictor):
 
@@ -259,7 +276,6 @@ class DetectionPredictor(BasePredictor):
             shape = orig_img[i].shape if self.webcam else orig_img.shape
             pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], shape).round()
 
-        print("iz predicta " + str(num_bikes))
 
         global_instance.set_no_of_people(num_people)
         global_instance.set_no_of_cars(num_cars)
@@ -297,6 +313,11 @@ class DetectionPredictor(BasePredictor):
             global_instance.set_no_of_people(0)
             print("Nista nije detektirano u frame-u " + str(global_instance.get_global_frame()))
             return log_string
+        
+        with open('per_frame.csv', 'a', newline='') as csvfile:
+            fieldnames = ['frame', 'people', 'bikes', 'buses', 'cars', 'trucks']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writerow({'frame': global_instance.global_frame, 'people': global_instance.no_of_people, 'bikes': global_instance.no_of_bikes,'buses': global_instance.no_of_buses, 'cars': global_instance.no_of_cars, 'trucks': global_instance.no_of_trucks})
 
         det = preds[idx]
         all_outputs.append(det)
@@ -353,26 +374,79 @@ Function that is called at the very end of execution. Analyses and plots collect
 TO DO
 """
 def analyze_and_plot():
-    #with open(csv_file, mode='r') as file:
-    #    csv_reader = csv.reader(file)
-    #    next(csv_reader)  # Skip the header row
-    #    for row in csv_reader:
-    #        csv_data.append(row)
-    # Open the CSV file and read its contents row by row
-    csv_data = []
+    
+    df_per_frame = pd.read_csv('per_frame.csv')
 
-    with open("results_TEST.csv", mode='r') as file:
-        csv_reader = csv.reader(file)
-        for row in csv_reader:
-            csv_data.append(row)
+    frames = df_per_frame["Frame"].values
+    cars = df_per_frame["Cars"].values
+    buses = df_per_frame["Buses"].values
+    trucks = df_per_frame["Trucks"].values
 
-    # Transpose the data
-    csv_data = np.array(csv_data).T.tolist()
+    car_mean = np.mean(cars)
+    car_median = np.median(cars)
+    buses_mean = np.mean(buses)
+    buses_median = np.median(buses)
+    trucks_mean = np.mean(trucks)
+    trucks_median = np.median(trucks)
 
-    print("Array s ocitanim podatcima iz csv-a")
-    # Print the transposed CSV data
-    for col_index, col_data in enumerate(csv_data):
-        print(f'Column {col_index}: {col_data}')
+    # Plot histogram and linechart for cars
+    plt.bar(frames, cars, width=1.0, alpha=0.7, label='Cars')
+    plt.axhline(y=car_mean, color='r', linestyle='--', label='Mean Cars')
+    plt.axhline(y=car_median, color='b', linestyle='--', label='Median Cars')
+    plt.xlabel('Frames')
+    plt.ylabel('Number of Cars')
+    plt.title('Histogram of Cars over Frames')
+    plt.legend()
+    plt.savefig("cars.png", format="png")
+    plt.show()
+
+    # Plot histogram and linechart for buses
+    plt.bar(frames, buses, width=1.0, alpha=0.7, label='Buses')
+    plt.axhline(y=buses_mean, color='r', linestyle='--', label='Mean Buses')
+    plt.axhline(y=buses_median, color='b', linestyle='--', label='Median Buses')
+    plt.xlabel('Frames')
+    plt.ylabel('Number of Buses')
+    plt.title('Histogram of Buses over Frames')
+    plt.legend()
+    plt.savefig("buses.png", format="png")
+    plt.show()
+
+    # Plot histogram and linechart for trucks
+    plt.bar(frames, trucks, width=1.0, alpha=0.7, label='Trucks')
+    plt.axhline(y=trucks_mean, color='r', linestyle='--', label='Mean Trucks')
+    plt.axhline(y=trucks_median, color='b', linestyle='--', label='Median Trucks')
+    plt.xlabel('Frames')
+    plt.ylabel('Number of Trucks')
+    plt.title('Histogram of Trucks over Frames')
+    plt.legend()
+    plt.savefig("trucks.png", format="png")
+    plt.show()
+
+    df_vehicle_ids = pd.read_csv('overall.csv')
+    types_of_vehicles = df_vehicle_ids["Type"].values
+    cars_overall = 0
+    trucks_overall = 0
+    buses_overall = 0
+
+    for type in types_of_vehicles:
+        if type == 'car':
+            cars_overall += 1
+        elif type == 'truck':
+            trucks_overall += 1
+        elif type == 'bus':
+            buses_overall += 1
+
+    # Plot pie chart of distribution of vehicles
+    labels = ['Cars', 'Trucks', 'Buses']
+    sizes = [cars_overall, trucks_overall, buses_overall]
+    colors = ['red','blue', 'yellow']
+    explode = (0.1, 0, 0)
+    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=140)
+    plt.axis('equal')
+    plt.title('Overall distribution of different vehicles in the video')
+    plt.legend()
+    plt.savefig("overall.png", format="png")
+    plt.show()
 
 if __name__ == "__main__":
     predict()

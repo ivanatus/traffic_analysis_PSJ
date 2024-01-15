@@ -2,7 +2,7 @@
 import numpy as np
 import sys
 import os
-linux_path = os.path.expanduser("~/YOLOv8-DeepSORT-Object-Tracking/ultralytics/yolo/v8/detect/deep_sort_pytorch/deep_sort/sort")
+linux_path = os.path.expanduser("~/traffic_analysis_PSJ/ultralytics/yolo/v8/detect/deep_sort_pytorch/deep_sort/sort")
 sys.path.append(linux_path)
 
 #sys.path.append(r"C:\Users\User\YOLOv8-DeepSORT-Object-Tracking\ultralytics\yolo\v8\detect\deep_sort_pytorch\deep_sort\sort")
