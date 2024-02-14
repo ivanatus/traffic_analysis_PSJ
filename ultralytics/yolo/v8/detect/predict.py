@@ -310,7 +310,10 @@ class DetectionPredictor(BasePredictor):
         self.annotator = self.get_annotator(im0)
 
         if idx >= len(preds):
-            global_instance.set_no_of_people(0)
+            with open('per_frame.csv', 'a', newline='') as csvfile:
+                fieldnames = ['frame', 'people', 'bikes', 'buses', 'cars', 'trucks']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writerow({'frame': global_instance.global_frame, 'people': 0, 'bikes': 0,'buses': 0, 'cars': 0, 'trucks': 0})
             print("Nista nije detektirano u frame-u " + str(global_instance.get_global_frame()))
             return log_string
         
@@ -381,52 +384,121 @@ def analyze_and_plot():
     cars = df_per_frame["Cars"].values
     buses = df_per_frame["Buses"].values
     trucks = df_per_frame["Trucks"].values
+    people = df_per_frame["People"]
+    bikes = df_per_frame["Bikes"]
 
     car_mean = np.mean(cars)
     car_median = np.median(cars)
+    car_std = np.std(cars)
     buses_mean = np.mean(buses)
     buses_median = np.median(buses)
+    buses_std = np.std(buses)
     trucks_mean = np.mean(trucks)
     trucks_median = np.median(trucks)
+    trucks_std = np.std(trucks)
+    people_mean = np.mean(people)
+    people_median = np.median(people)
+    people_std = np.std(people)
+    bikes_mean = np.mean(bikes)
+    bikes_median = np.median(bikes)
+    bikes_std = np.std(bikes)
+
+    print("Car Statistics:")
+    print(f"Mean: {car_mean}")
+    print(f"Median: {car_median}")
+    print(f"Standard Deviation: {car_std}\n")
+
+    print("Buses Statistics:")
+    print(f"Mean: {buses_mean}")
+    print(f"Median: {buses_median}")
+    print(f"Standard Deviation: {buses_std}\n")
+
+    print("Trucks Statistics:")
+    print(f"Mean: {trucks_mean}")
+    print(f"Median: {trucks_median}")
+    print(f"Standard Deviation: {trucks_std}\n")
+
+    print("People Statistics:")
+    print(f"Mean: {people_mean}")
+    print(f"Median: {people_median}")
+    print(f"Standard Deviation: {people_std}\n")
+
+    print("Bikes Statistics:")
+    print(f"Mean: {bikes_mean}")
+    print(f"Median: {bikes_median}")
+    print(f"Standard Deviation: {bikes_std}")
 
     # Plot histogram and linechart for cars
     plt.bar(frames, cars, width=1.0, alpha=0.7, label='Cars')
-    plt.axhline(y=car_mean, color='r', linestyle='--', label='Mean Cars')
     plt.axhline(y=car_median, color='b', linestyle='--', label='Median Cars')
     plt.xlabel('Frames')
     plt.ylabel('Number of Cars')
     plt.title('Histogram of Cars over Frames')
     plt.legend()
-    plt.savefig("cars.png", format="png")
+    plt.savefig("video3_cars.png", format="png")
     plt.show()
 
     # Plot histogram and linechart for buses
     plt.bar(frames, buses, width=1.0, alpha=0.7, label='Buses')
-    plt.axhline(y=buses_mean, color='r', linestyle='--', label='Mean Buses')
     plt.axhline(y=buses_median, color='b', linestyle='--', label='Median Buses')
     plt.xlabel('Frames')
     plt.ylabel('Number of Buses')
     plt.title('Histogram of Buses over Frames')
     plt.legend()
-    plt.savefig("buses.png", format="png")
+    plt.savefig("video3_buses.png", format="png")
     plt.show()
 
     # Plot histogram and linechart for trucks
     plt.bar(frames, trucks, width=1.0, alpha=0.7, label='Trucks')
-    plt.axhline(y=trucks_mean, color='r', linestyle='--', label='Mean Trucks')
     plt.axhline(y=trucks_median, color='b', linestyle='--', label='Median Trucks')
     plt.xlabel('Frames')
     plt.ylabel('Number of Trucks')
     plt.title('Histogram of Trucks over Frames')
     plt.legend()
-    plt.savefig("trucks.png", format="png")
+    plt.savefig("video3_trucks.png", format="png")
     plt.show()
+
+    # Plot histogram and linechart for people
+    plt.bar(frames, people, width=1.0, alpha=0.7, label='People')
+    plt.axhline(y=people_median, color='b', linestyle='--', label='Median People')
+    plt.xlabel('Frames')
+    plt.ylabel('Number of People')
+    plt.title('Histogram of People over Frames')
+    plt.legend()
+    plt.savefig("video3_people.png", format="png")
+    plt.show()
+
+    # Plot histogram and linechart for bikes
+    plt.bar(frames, bikes, width=1.0, alpha=0.7, label='Bikes')
+    plt.axhline(y=bikes_median, color='b', linestyle='--', label='Median Bikes')
+    plt.xlabel('Frames')
+    plt.ylabel('Number of Bikes')
+    plt.title('Histogram of Bikes over Frames')
+    plt.legend()
+    plt.savefig("video3_bikes.png", format="png")
+    plt.show()
+
+     # Data
+    categories = ['Cars', 'Buses', 'Trucks', 'People', 'Bikes']
+    means = [car_mean, buses_mean, trucks_mean, people_mean, bikes_mean]
+    std_devs = [car_std, buses_std, trucks_std, people_std, bikes_std]
+
+    # Plotting
+    plt.bar(categories, means, yerr=std_devs, capsize=5, color=['blue', 'orange', 'green', 'purple', 'red'])
+    plt.xlabel('Vehicle Types')
+    plt.ylabel('Mean Values of number of detected vehicles')
+    plt.title('Mean Values with Standard Deviation Error Bars')
+    plt.savefig("video3_barplot.png", format="png")
+    plt.show()
+    #plt.close()
 
     df_vehicle_ids = pd.read_csv('overall.csv')
     types_of_vehicles = df_vehicle_ids["Type"].values
     cars_overall = 0
     trucks_overall = 0
     buses_overall = 0
+    people_overall = 0
+    bikes_overall = 0
 
     for type in types_of_vehicles:
         if type == 'car':
@@ -435,17 +507,21 @@ def analyze_and_plot():
             trucks_overall += 1
         elif type == 'bus':
             buses_overall += 1
+        elif type == 'person':
+            people_overall += 1
+        elif type == 'bicycle':
+            bikes_overall += 1
 
     # Plot pie chart of distribution of vehicles
-    labels = ['Cars', 'Trucks', 'Buses']
-    sizes = [cars_overall, trucks_overall, buses_overall]
-    colors = ['red','blue', 'yellow']
-    explode = (0.1, 0, 0)
+    labels = ['Cars', 'Trucks', 'Buses', 'People', 'Bikes']
+    sizes = [cars_overall, trucks_overall, buses_overall, people_overall, bikes_overall]
+    colors = ['red','blue', 'yellow', 'purple', 'green']
+    explode = (0.1, 0, 0, 0, 0)
     plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=140)
     plt.axis('equal')
     plt.title('Overall distribution of different vehicles in the video')
     plt.legend()
-    plt.savefig("overall.png", format="png")
+    plt.savefig("video3_overall.png", format="png")
     plt.show()
 
 if __name__ == "__main__":
