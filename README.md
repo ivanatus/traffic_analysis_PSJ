@@ -34,11 +34,9 @@ gdown "https://drive.google.com/uc?id=1rjBn8Fl1E_9d0EMVtL24S9aNQOJAveR5&confirm=
 - Run the code with mentioned command below.
 
 - For yolov8 object detection + Tracking
-```
-python predict.py model=yolov8l.pt source="test3.mp4" show=True
-```
 - If you want to run this on your own video, place the video in the folder traffic_analysis_PSJ/ultralytics/yolo/v8/detect (.mp4 format)
 
 ```
 python predict.py model=yolov8l.pt source="your_video_title.mp4" show=True
+python analysis.py
 ```
